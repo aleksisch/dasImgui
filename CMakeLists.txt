@@ -192,20 +192,28 @@ IF((NOT DAS_IMGUI_INCLUDED) AND ((NOT ${DAS_IMGUI_DISABLED}) OR (NOT DEFINED DAS
 		${DAS_IMGUI_NODE_EDITOR_BIND_DIR}/src/dasIMGUI_NODE_EDITOR.func_6.cpp
 	)
 
-	ADD_MODULE_LIB(libDasModuleImGui)
 	ADD_MODULE_CPP(dasIMGUI)
 	ADD_MODULE_CPP(dasIMNODES)
 	ADD_MODULE_CPP(dasIMGUI_NODE_EDITOR)
 	ADD_MODULE_DAS(imgui daslib imgui_boost)
 	ADD_MODULE_DAS(imgui daslib imnodes_boost)
 	ADD_MODULE_DAS(imgui daslib imgui_node_editor_boost)
-	ADD_LIBRARY(libDasModuleImGui
+	ADD_MODULE_LIB(libDasModuleImGui
 		${DAS_IMGUI_BIND_MODULE_SRC}
 		${DAS_IMNODES_BIND_MODULE_SRC}
 		${DAS_IMGUI_NODE_EDITOR_BIND_MODULE_SRC}
 		${DAS_IMGUI_SRC} ${DAS_IMNODES_SRC} ${DAS_IMGUI_NODE_EDITOR_SRC})
-	#TARGET_LINK_LIBRARIES(libDasModuleImGui ${imgui_LIBRARIES})
-	# ADD_DEPENDENCIES(libDasModuleImGui )
+	if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+	    SET(DAS_IMGUI_API "__attribute__\(\(visibility\(\"default\"\)\)\)")
+	elseif(WIN32)
+	    SET(DAS_IMGUI_API "__declspec\(dllexport\)")
+	else()
+	    SET(DAS_IMGUI_API "")
+	endif()
+	target_compile_definitions(libDasModuleImGui PRIVATE IMGUI_API=${DAS_IMGUI_API})
+	target_compile_definitions(libDasModuleImGui PRIVATE IMGUI_IMPL_API=${DAS_IMGUI_API})
+	target_compile_definitions(libDasModuleImGui PRIVATE IMGUI_NODE_EDITOR_API=${DAS_IMGUI_API})
+
 	TARGET_INCLUDE_DIRECTORIES(libDasModuleImGui PUBLIC ${imgui_INCLUDE_DIR} ${imnodes_INCLUDE_DIR} ${imgui_node_editor_INCLUDE_DIR} ${DAS_IMGUI_BIND_DIR}/src)
 	SETUP_CPP11(libDasModuleImGui)
 
@@ -247,10 +255,11 @@ IF((NOT DAS_IMGUI_INCLUDED) AND ((NOT ${DAS_IMGUI_DISABLED}) OR (NOT DEFINED DAS
 			${DAS_IMGUI_DIR}/example/imgui_opengl2.das
 			${DAS_IMGUI_DIR}/example/imnode_editor.das
 		)
-		ADD_MODULE_LIB(libDasModuleImGuiApp)
+		ADD_MODULE_LIB(libDasModuleImGuiApp ${DAS_IMGUI_APP_MODULE_SRC})
 		ADD_MODULE_CPP(imgui_app)
-		ADD_LIBRARY(libDasModuleImGuiApp ${DAS_IMGUI_APP_MODULE_SRC})
-		TARGET_LINK_LIBRARIES(libDasModuleImGuiApp
+		TARGET_LINK_LIBRARIES(libDasModuleImGuiApp PUBLIC
+			libDasModuleImGui
+			libDasModuleGlfw
 			${GLFW_LIBRARIES}
 			${OPENGL_LIBRARIES}
 		)
@@ -285,8 +294,12 @@ IF((NOT DAS_IMGUI_INCLUDED) AND ((NOT ${DAS_IMGUI_DISABLED}) OR (NOT DEFINED DAS
 		${DAS_MODULES_NEED_INC}
 	)
 	SOURCE_GROUP_FILES("main" IMGUI_OPENGL_DEMO_SRC)
-	add_executable(dasImguiOpenGL ${IMGUI_OPENGL_DEMO_SRC} ${IMGUI_OPENGL_AOT_GENERATED_SRC})
-	TARGET_LINK_LIBRARIES(dasImguiOpenGL libDaScript libDaScriptAot Threads::Threads)
+    add_executable(dasImguiOpenGL ${IMGUI_OPENGL_DEMO_SRC} ${IMGUI_OPENGL_AOT_GENERATED_SRC})
+	target_compile_definitions(dasImguiOpenGL PRIVATE IMGUI_API=${DAS_IMGUI_API})
+	target_compile_definitions(dasImguiOpenGL PRIVATE IMGUI_IMPL_API=${DAS_IMGUI_API})
+	target_compile_definitions(dasImguiOpenGL PRIVATE IMGUI_NODE_EDITOR_API=${DAS_IMGUI_API})
+
+	TARGET_LINK_LIBRARIES(dasImguiOpenGL libDasModuleImGui libDasModuleGlfw Threads::Threads)
 	# ADD_DEPENDENCIES(dasImguiOpenGL libDaScript)
 	ADD_DEPENDENCIES(dasImguiOpenGL dasImguiOpenGL_AOT libDaScriptAot)
 	TARGET_INCLUDE_DIRECTORIES(dasImguiOpenGL PUBLIC ${imgui_INCLUDE_DIR} ${GLFW_INCLUDE_DIR} ${imnodes_INCLUDE_DIR} ${imgui_node_editor_INCLUDE_DIR})
@@ -354,9 +367,8 @@ IF((NOT DAS_IMGUI_INCLUDED) AND ((NOT ${DAS_IMGUI_DISABLED}) OR (NOT DEFINED DAS
 			${DAS_IMGUI_DIR}/example/imgui_demo.das
 			${DAS_IMGUI_DIR}/example/imgui_vulkan.das
 		)
-		ADD_MODULE_LIB(libDasModuleImGuiVulkan)
 		ADD_MODULE_CPP(imgui_vulkan)
-		ADD_LIBRARY(libDasModuleImGuiVulkan ${DAS_IMGUI_VULKAN_MODULE_SRC})
+		ADD_DAS_LIBRARY(libDasModuleImGuiVulkan ${DAS_IMGUI_VULKAN_MODULE_SRC})
 		TARGET_LINK_LIBRARIES(libDasModuleImGuiVulkan ${GLFW_LIBRARIES})
 		# ADD_DEPENDENCIES(libDasModuleImGuiVulkan libDasModuleImGui)
 		TARGET_INCLUDE_DIRECTORIES(libDasModuleImGuiVulkan PUBLIC

@@ -102,7 +102,7 @@ public:
         tw << "#include \"../modules/dasImgui/src/imnodes_stub.h\"\n";
         tw << "#include <backends/imgui_impl_glfw.h>\n";
         tw << "#include <backends/imgui_impl_opengl3.h>\n";
-        tw << "void das_ImGui_ImplOpenGL3_Init ( const char * version );\n";
+        tw << "DAS_MOD_API void das_ImGui_ImplOpenGL3_Init ( const char * version );\n";
         return ModuleAotType::cpp;
     }
 };
